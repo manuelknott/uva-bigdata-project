@@ -147,7 +147,7 @@ for i, filepath in enumerate(filepaths):
 
         # Open a file with access mode 'a'
         file_object = open('2_online_results.txt', 'a')
-        file_object.write(f'{accuracy_score(y_test, online_predictions)} {f1_score(y_test, online_predictions)} {_time} {asizeof.asizeof(online_forest)}\n')
+        file_object.write(f'{accuracy_score(y_test, online_predictions)} {f1_score(y_test, online_predictions)} {_time}\n')
         file_object.close()
 
     if i == MAX_ITERS - 1:
