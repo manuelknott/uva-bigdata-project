@@ -33,8 +33,8 @@ offline_forest = RandomForestClassifier(n_estimators=N_TREES, max_depth=MAX_DEPT
 online_forest = MondrianForestClassifier(n_estimators=N_TREES, max_depth=MAX_DEPTH)
 
 MAX_ITERS = args.n_iter
-TRAIN_OFFLINE = ~args.online_only
-TRAIN_ONLINE = ~args.offline_only
+TRAIN_OFFLINE = not args.online_only
+TRAIN_ONLINE = not args.offline_only
 DEBUG = False
 BATCH_SIZE_LIMIT = args.batch_size
 
@@ -105,10 +105,9 @@ for i, balance_fraction in enumerate(balance_fractions):
             f'{accuracy_score(y_test, offline_predictions)} {f1_score(y_test, offline_predictions)} {_time}\n')
         file_object.close()
 
-    if DEBUG:
-        print("Fitting online.")
-
     if TRAIN_ONLINE:
+        if DEBUG:
+            print("Fitting online.")
         _time = time.time()
         online_forest.partial_fit(new_X_train, new_y_train)
         _time = time.time() - _time

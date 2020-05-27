@@ -61,8 +61,8 @@ def load_and_preprocess(path, batch_size_limit=None):
 
 
 MAX_ITERS = args.n_iter
-TRAIN_OFFLINE = ~args.online_only
-TRAIN_ONLINE = ~args.offline_only
+TRAIN_OFFLINE = not args.online_only
+TRAIN_ONLINE = not args.offline_only
 DEBUG = False
 BATCH_SIZE_LIMIT = args.batch_size
 
