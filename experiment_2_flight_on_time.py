@@ -16,12 +16,12 @@ from sklearn.metrics import accuracy_score, f1_score
 from guppy import hpy
 
 parser = argparse.ArgumentParser()
-parser.add_argument('n-iter', help='Number of iterations')
-parser.add_argument('batch-size', help='Number of entries per batch')
-parser.add_argument('--n-trees', help='Number of trees', default=40)
-parser.add_argument('--max-depth', help='max tree depth', default=50)
-parser.add_argument('--offline-only', help='If true, online training is skipped.', action='store_true')
-parser.add_argument('--online-only', help='If true, offline training is skipped.', action='store_true')
+parser.add_argument('n_iter', help='Number of iterations')
+parser.add_argument('batch_size', help='Number of entries per batch')
+parser.add_argument('--n_trees', help='Number of trees', default=40)
+parser.add_argument('--max_depth', help='max tree depth', default=50)
+parser.add_argument('--offline_only', help='If true, online training is skipped.', action='store_true')
+parser.add_argument('--online_only', help='If true, offline training is skipped.', action='store_true')
 args = parser.parse_args()
 
 RANDOM_SEED = 42
@@ -128,7 +128,7 @@ for i, filepath in enumerate(filepaths):
         offline_f1score.append(f1_score(y_test, offline_predictions))
         offline_training_times.append(_time)
 
-        file_object = open('offline_results.txt', 'a')
+        file_object = open('2_offline_results.txt', 'a')
         file_object.write(
             f'{accuracy_score(y_test, offline_predictions)} {f1_score(y_test, offline_predictions)} {_time}\n')
         file_object.close()
@@ -146,7 +146,7 @@ for i, filepath in enumerate(filepaths):
         online_predictions = online_probabilities.argmax(axis=1)
 
         # Open a file with access mode 'a'
-        file_object = open('online_results.txt', 'a')
+        file_object = open('2_online_results.txt', 'a')
         file_object.write(f'{accuracy_score(y_test, online_predictions)} {f1_score(y_test, online_predictions)} {_time} {asizeof.asizeof(online_forest)}\n')
         file_object.close()
 
