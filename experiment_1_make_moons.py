@@ -15,14 +15,14 @@ np.random.seed = RANDOM_SEED
 random.seed = RANDOM_SEED
 
 N_TREES=80
-OFFLINE_N_JOBS = 8
+OFFLINE_N_JOBS = 1
 offline_forest = RandomForestClassifier(n_estimators=N_TREES, n_jobs=OFFLINE_N_JOBS)
 online_forest = MondrianForestClassifier(n_tree=N_TREES)
 
-MAX_ITERS = 10
+MAX_ITERS = 1000
 TRAIN_OFFLINE = True
 DEBUG = True
-BATCH_SIZE_LIMIT = 1500
+BATCH_SIZE_LIMIT = 3000
 
 offline_X_train = None
 offline_y_train = None

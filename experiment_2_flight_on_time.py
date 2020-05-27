@@ -1,14 +1,28 @@
+import sys
 import os
+import gc
 import random
 import time
+import argparse
 
 import numpy as np
 import pandas as pd
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from mondrianforest import MondrianForestClassifier
+from skgarden import MondrianForestClassifier
 from sklearn.metrics import accuracy_score, f1_score
+
+from guppy import hpy
+
+parser = argparse.ArgumentParser()
+parser.add_argument('n-iter', help='Number of iterations')
+parser.add_argument('batch-size', help='Number of entries per batch')
+parser.add_argument('--n-trees', help='Number of trees', default=40)
+parser.add_argument('--max-depth', help='max tree depth', default=50)
+parser.add_argument('--offline-only', help='If true, online training is skipped.', action='store_true')
+parser.add_argument('--online-only', help='If true, offline training is skipped.', action='store_true')
+args = parser.parse_args()
 
 RANDOM_SEED = 42
 np.random.seed = RANDOM_SEED
@@ -25,10 +39,13 @@ AIRPORT_CODES = list(pd.read_csv("data/airports.csv")["IATA_CODE"].values)
 DIR = "data/AirOnTimeCSV"
 filepaths = [os.path.join(DIR, filename) for filename in os.listdir(DIR)]
 
-N_TREES=80
-OFFLINE_N_JOBS = 8
-offline_forest = RandomForestClassifier(n_estimators=N_TREES, n_jobs=OFFLINE_N_JOBS)
-online_forest = MondrianForestClassifier(n_tree=N_TREES)
+N_TREES = args.n_trees
+OFFLINE_N_JOBS = 1
+MIN_SAMPLES_SPLIT = 2
+MAX_DEPTH = args.max_depth
+
+offline_forest = RandomForestClassifier(n_estimators=N_TREES, n_jobs=OFFLINE_N_JOBS, max_depth=MAX_DEPTH, min_samples_split=MIN_SAMPLES_SPLIT)
+online_forest = MondrianForestClassifier(n_estimators=N_TREES, max_depth=MAX_DEPTH, min_samples_split=MIN_SAMPLES_SPLIT)
 
 def load_and_preprocess(path, batch_size_limit=None):
     df = pd.read_csv(path)
@@ -43,10 +60,11 @@ def load_and_preprocess(path, batch_size_limit=None):
     return pd.concat([df[NUM_FEATURES+Y], airline_dummies, origin_dummies, dest_dummies], axis=1)
 
 
-MAX_ITERS = 10
-TRAIN_OFFLINE = True
-DEBUG = True
-BATCH_SIZE_LIMIT = 750
+MAX_ITERS = args.n_iter
+TRAIN_OFFLINE = ~args.online_only
+TRAIN_ONLINE = ~args.offline_only
+DEBUG = False
+BATCH_SIZE_LIMIT = args.batch_size
 
 offline_X_train = None
 offline_y_train = None
@@ -61,10 +79,14 @@ offline_training_times = []
 online_update_times = []
 
 for i, filepath in enumerate(filepaths):
-    new_batch = load_and_preprocess(filepath, batch_size_limit=BATCH_SIZE_LIMIT)
-    new_X = new_batch.drop(columns=Y).values
-    new_y = np.ravel(new_batch[Y].values)
-    new_X_train, new_X_test, new_y_train, new_y_test = train_test_split(new_X, new_y)
+    try:
+        new_batch = load_and_preprocess(filepath, batch_size_limit=BATCH_SIZE_LIMIT)
+        new_X = new_batch.drop(columns=Y).values
+        new_y = np.ravel(new_batch[Y].values)
+        new_X_train, new_X_test, new_y_train, new_y_test = train_test_split(new_X, new_y)
+    except:
+        print("skipped file due to import error")
+        continue
 
     if i == 0:
         offline_X_train = new_X_train
@@ -106,23 +128,29 @@ for i, filepath in enumerate(filepaths):
         offline_f1score.append(f1_score(y_test, offline_predictions))
         offline_training_times.append(_time)
 
+        file_object = open('offline_results.txt', 'a')
+        file_object.write(
+            f'{accuracy_score(y_test, offline_predictions)} {f1_score(y_test, offline_predictions)} {_time}\n')
+        file_object.close()
+
     if DEBUG:
         print("Fitting online.")
 
-    _time = time.time()
-    online_forest.partial_fit(new_X_train, new_y_train)
-    _time = time.time() - _time
-    if DEBUG:
-        print(f"online classes: {online_forest.classes}")
+    if TRAIN_ONLINE:
 
-    online_probabilities = online_forest.predict_proba(X_test)
-    online_predictions = online_probabilities.argmax(axis=1)
-    online_accuracy.append(accuracy_score(y_test, online_predictions))
-    online_f1score.append(f1_score(y_test, online_predictions))
-    online_update_times.append(_time)
+        _time = time.time()
+        online_forest.partial_fit(new_X_train, new_y_train)
+        _time = time.time() - _time
 
-    if DEBUG:
-        print("=============")
+        online_probabilities = online_forest.predict_proba(X_test)
+        online_predictions = online_probabilities.argmax(axis=1)
+
+        # Open a file with access mode 'a'
+        file_object = open('online_results.txt', 'a')
+        file_object.write(f'{accuracy_score(y_test, online_predictions)} {f1_score(y_test, online_predictions)} {_time} {asizeof.asizeof(online_forest)}\n')
+        file_object.close()
 
     if i == MAX_ITERS - 1:
         break
+
+    gc.collect()
