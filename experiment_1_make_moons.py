@@ -14,10 +14,10 @@ from utils import get_unbalanced_moons
 from guppy import hpy
 
 parser = argparse.ArgumentParser()
-parser.add_argument('n_iter', help='Number of iterations')
-parser.add_argument('batch_size', help='Number of entries per batch')
-parser.add_argument('--n_trees', help='Number of trees', default=40)
-parser.add_argument('--max_depth', help='max tree depth', default=50)
+parser.add_argument('n_iter', help='Number of iterations', type=int)
+parser.add_argument('batch_size', help='Number of entries per batch', type=int)
+parser.add_argument('--n_trees', help='Number of trees', default=40, type=int)
+parser.add_argument('--max_depth', help='max tree depth', default=50, type=int)
 parser.add_argument('--offline_only', help='If true, online training is skipped.', action='store_true')
 parser.add_argument('--online_only', help='If true, offline training is skipped.', action='store_true')
 args = parser.parse_args()
