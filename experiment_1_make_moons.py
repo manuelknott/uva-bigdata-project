@@ -50,7 +50,10 @@ online_f1score = []
 offline_training_times = []
 online_update_times = []
 
-balance_fractions = [0.25] * 5 + [0.75] * 5
+_iters_phase_1 = args.n_iter // 2
+_iters_phase_2 = args.n_iter - _iters_phase_1
+
+balance_fractions = [0.25] * _iters_phase_1 + [0.75] * _iters_phase_2
 
 for i, balance_fraction in enumerate(balance_fractions):
     new_X, new_y = get_unbalanced_moons(BATCH_SIZE_LIMIT, balance_fraction=balance_fraction)
