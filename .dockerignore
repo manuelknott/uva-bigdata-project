@@ -1,0 +1,8 @@
+.git
+.idea
+.ipynb*
+__pycache__
+data
+activate
+.venv
+*.pdf
